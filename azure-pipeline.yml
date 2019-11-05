@@ -19,10 +19,10 @@ stages:
         configFilePath: GitVersion.yml
         updateAssemblyInfo: true
     - task: AzureResourceGroupDeployment@2
-      displayName: 'Azure Deployment:Create Or Update Resource Group action on op01-dev-we'
+      displayName: 'Azure Deployment:Create Or Update Resource Group action on $(System.TeamProject)-dev-we'
       inputs:
-        azureSubscription: PMOAzure
-        resourceGroupName: 'op01-dev-we'
+        azureSubscription: AzureServiceConnection
+        resourceGroupName: '$(System.TeamProject)-dev-we'
         location: 'West Europe'
         csmFile: template.master.json
         csmParametersFile: parameters/parameters.dev.json
@@ -61,31 +61,31 @@ stages:
             displayName: 'AzureBlob File Copy'
             inputs:
               SourcePath: '$(Build.SourcesDirectory)\ARM\s'
-              azureSubscription: PMOAzure
+              azureSubscription: AzureServiceConnection
               Destination: AzureBlob
               storage: shareddeploymentstore001
-              ContainerName: 'op01-armtemplates'
+              ContainerName: '$(System.TeamProject)-armtemplates'
               outputStorageUri: storageUri
               outputStorageContainerSasToken: storageKey          
           - task: AzurePowerShell@3
             displayName: 'Azure PowerShell script: InlineScript'
             inputs:
-              azureSubscription: PMOAzure
+              azureSubscription: AzureServiceConnection
               ScriptType: InlineScript
               Inline: |
-                $result = Get-AzureRmResource -Name "op01-app-dev-we-func"
+                $result = Get-AzureRmResource -Name "$(System.TeamProject)-app-dev-we-func"
                 $is_exist = $result.Count -gt 0
                 Write-Host "##vso[task.setvariable variable=function_app_exist;]$is_exist"
               azurePowerShellVersion: LatestVersion
           - task: AzureResourceGroupDeployment@2
-            displayName: 'Azure Deployment:Create Or Update Resource Group action on op01-dev-we'
+            displayName: 'Azure Deployment:Create Or Update Resource Group action on $(System.TeamProject)-dev-we'
             inputs:
-              azureSubscription: PMOAzure
-              resourceGroupName: 'op01-dev-we'
+              azureSubscription: AzureServiceConnection
+              resourceGroupName: '$(System.TeamProject)-dev-we'
               location: 'West Europe'
               csmFile: '$(Build.SourcesDirectory)\ARM\s\template.master.json'
               csmParametersFile: '$(Build.SourcesDirectory)\ARM\s\parameters\parameters.dev.json'
-              overrideParameters: '-storageUri $(storageUri) -storageKey $(storageKey) -function_app_exist $(function_app_exist)'
+              overrideParameters: '-storageUri $(storageUri) -storageKey $(storageKey) -function_app_exist $(function_app_exist) -projectName $(System.TeamProject)'
               deploymentOutputs: armoutput
           - task: PowerShell@2
             displayName: 'Save output params'
@@ -98,7 +98,7 @@ stages:
                 
                 # Base64-encodes the Personal Access Token (PAT) appropriately
                 $base64AuthInfo = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(("{0}:{1}" -f "","asr25moaue5wvpylvletvwjoyx7xnguk4gjzcibpfhfztpy32h6q")))
-                $url = "https://dev.azure.com/phimorisseau0895/ProjetPMO/_apis/distributedtask/variablegroups/1?api-version=5.0-preview.1"
+                $url = "https://dev.azure.com/phimorisseau0895/$(System.TeamProject)/_apis/distributedtask/variablegroups/1?api-version=5.0-preview.1"
                 
                 $json = '{"id":1,"type":"Vsts","name":"DEV Configuration","variables":{'
                 $data.GetEnumerator() | foreach {
@@ -118,7 +118,7 @@ stages:
           - task: AzureCLI@2
             displayName: Upsert table 'Table01' in storage account
             inputs:
-              azureSubscription: PMOAzure
+              azureSubscription: AzureServiceConnection
               scriptType: ps
               scriptLocation: inlineScript
               inlineScript: |
@@ -157,31 +157,31 @@ stages:
             displayName: 'AzureBlob File Copy'
             inputs:
               SourcePath: '$(Build.SourcesDirectory)\ARM\s'
-              azureSubscription: PMOAzure
+              azureSubscription: AzureServiceConnection
               Destination: AzureBlob
               storage: shareddeploymentstore001
-              ContainerName: 'op01-armtemplates'
+              ContainerName: '$(System.TeamProject)-armtemplates'
               outputStorageUri: storageUri
               outputStorageContainerSasToken: storageKey          
           - task: AzurePowerShell@3
             displayName: 'Azure PowerShell script: InlineScript'
             inputs:
-              azureSubscription: PMOAzure
+              azureSubscription: AzureServiceConnection
               ScriptType: InlineScript
               Inline: |
-                $result = Get-AzureRmResource -Name "op01-app-uat-we-func"
+                $result = Get-AzureRmResource -Name "$(System.TeamProject)-app-uat-we-func"
                 $is_exist = $result.Count -gt 0
                 Write-Host "##vso[task.setvariable variable=function_app_exist;]$is_exist"
               azurePowerShellVersion: LatestVersion
           - task: AzureResourceGroupDeployment@2
-            displayName: 'Azure Deployment:Create Or Update Resource Group action on op01-uat-we'
+            displayName: 'Azure Deployment:Create Or Update Resource Group action on $(System.TeamProject)-uat-we'
             inputs:
-              azureSubscription: PMOAzure
-              resourceGroupName: 'op01-uat-we'
+              azureSubscription: AzureServiceConnection
+              resourceGroupName: '$(System.TeamProject)-uat-we'
               location: 'West Europe'
               csmFile: '$(Build.SourcesDirectory)\ARM\s\template.master.json'
               csmParametersFile: '$(Build.SourcesDirectory)\ARM\s\parameters\parameters.uat.json'
-              overrideParameters: '-storageUri $(storageUri) -storageKey $(storageKey) -function_app_exist $(function_app_exist)'
+              overrideParameters: '-storageUri $(storageUri) -storageKey $(storageKey) -function_app_exist $(function_app_exist) -projectName $(System.TeamProject)'
               deploymentOutputs: armoutput
           - task: PowerShell@2
             displayName: 'Save output params'
@@ -194,7 +194,7 @@ stages:
                 
                 # Base64-encodes the Personal Access Token (PAT) appropriately
                 $base64AuthInfo = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(("{0}:{1}" -f "","asr25moaue5wvpylvletvwjoyx7xnguk4gjzcibpfhfztpy32h6q")))
-                $url = "https://dev.azure.com/phimorisseau0895/ProjetPMO/_apis/distributedtask/variablegroups/1?api-version=5.0-preview.1"
+                $url = "https://dev.azure.com/phimorisseau0895/$(System.TeamProject)/_apis/distributedtask/variablegroups/1?api-version=5.0-preview.1"
                 
                 $json = '{"id":1,"type":"Vsts","name":"UAT Configuration","variables":{'
                 $data.GetEnumerator() | foreach {
