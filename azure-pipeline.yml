@@ -21,7 +21,7 @@ stages:
     - task: AzureResourceGroupDeployment@2
       displayName: 'Azure Deployment:Create Or Update Resource Group action on $(System.TeamProject)-dev-we'
       inputs:
-        azureSubscription: '$(AzureConnectionName)'
+        azureSubscription: AzureServiceConnection
         resourceGroupName: '$(System.TeamProject)-dev-we'
         location: 'West Europe'
         csmFile: template.master.json
@@ -62,7 +62,7 @@ stages:
             displayName: 'AzureBlob File Copy'
             inputs:
               SourcePath: '$(Build.SourcesDirectory)\ARM\s'
-              azureSubscription: '$(AzureConnectionName)'
+              azureSubscription: AzureServiceConnection
               Destination: AzureBlob
               storage: shareddeploymentstore001
               ContainerName: '$(System.TeamProject)-armtemplates'
@@ -71,7 +71,7 @@ stages:
           - task: AzurePowerShell@3
             displayName: 'Azure PowerShell script: InlineScript'
             inputs:
-              azureSubscription: '$(AzureConnectionName)'
+              azureSubscription: AzureServiceConnection
               ScriptType: InlineScript
               Inline: |
                 $result = Get-AzureRmResource -Name "$(System.TeamProject)-app-dev-we-func"
@@ -81,7 +81,7 @@ stages:
           - task: AzureResourceGroupDeployment@2
             displayName: 'Azure Deployment:Create Or Update Resource Group action on $(System.TeamProject)-dev-we'
             inputs:
-              azureSubscription: '$(AzureConnectionName)'
+              azureSubscription: AzureServiceConnection
               resourceGroupName: '$(System.TeamProject)-dev-we'
               location: 'West Europe'
               csmFile: '$(Build.SourcesDirectory)\ARM\s\template.master.json'
@@ -119,7 +119,7 @@ stages:
           - task: AzureCLI@2
             displayName: Upsert table 'Table01' in storage account
             inputs:
-              azureSubscription: '$(AzureConnectionName)'
+              azureSubscription: AzureServiceConnection
               scriptType: ps
               scriptLocation: inlineScript
               inlineScript: |
@@ -159,7 +159,7 @@ stages:
             displayName: 'AzureBlob File Copy'
             inputs:
               SourcePath: '$(Build.SourcesDirectory)\ARM\s'
-              azureSubscription: '$(AzureConnectionName)'
+              azureSubscription: AzureServiceConnection
               Destination: AzureBlob
               storage: shareddeploymentstore001
               ContainerName: '$(System.TeamProject)-armtemplates'
@@ -168,7 +168,7 @@ stages:
           - task: AzurePowerShell@3
             displayName: 'Azure PowerShell script: InlineScript'
             inputs:
-              azureSubscription: '$(AzureConnectionName)'
+              azureSubscription: AzureServiceConnection
               ScriptType: InlineScript
               Inline: |
                 $result = Get-AzureRmResource -Name "$(System.TeamProject)-app-uat-we-func"
@@ -178,7 +178,7 @@ stages:
           - task: AzureResourceGroupDeployment@2
             displayName: 'Azure Deployment:Create Or Update Resource Group action on $(System.TeamProject)-uat-we'
             inputs:
-              azureSubscription: '$(AzureConnectionName)'
+              azureSubscription: AzureServiceConnection
               resourceGroupName: '$(System.TeamProject)-uat-we'
               location: 'West Europe'
               csmFile: '$(Build.SourcesDirectory)\ARM\s\template.master.json'
