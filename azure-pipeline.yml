@@ -85,7 +85,7 @@ stages:
               location: 'West Europe'
               csmFile: '$(Build.SourcesDirectory)\ARM\s\template.master.json'
               csmParametersFile: '$(Build.SourcesDirectory)\ARM\s\parameters\parameters.dev.json'
-              overrideParameters: '-storageUri $(storageUri) -storageKey $(storageKey) -function_app_exist $(function_app_exist) -projectName $(System.TeamProject)'
+              overrideParameters: '-storageUri $(storageUri) -storageKey $(storageKey) -function_app_exist $(function_app_exist) -project_name $(System.TeamProject)'
               deploymentOutputs: armoutput
           - task: PowerShell@2
             displayName: 'Save output params'
@@ -140,7 +140,7 @@ stages:
     displayName: deploy and configure azure infra
     pool:
       vmImage: windows-latest
-    environment: DEV
+    environment: UAT
     strategy:
       runOnce:
         deploy:
@@ -181,7 +181,7 @@ stages:
               location: 'West Europe'
               csmFile: '$(Build.SourcesDirectory)\ARM\s\template.master.json'
               csmParametersFile: '$(Build.SourcesDirectory)\ARM\s\parameters\parameters.uat.json'
-              overrideParameters: '-storageUri $(storageUri) -storageKey $(storageKey) -function_app_exist $(function_app_exist) -projectName $(System.TeamProject)'
+              overrideParameters: '-storageUri $(storageUri) -storageKey $(storageKey) -function_app_exist $(function_app_exist) -project_name $(System.TeamProject)'
               deploymentOutputs: armoutput
           - task: PowerShell@2
             displayName: 'Save output params'
