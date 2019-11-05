@@ -99,8 +99,8 @@ stages:
                 $data = $JS.DeserializeObject("$($env:armoutput)")
                 
                 # Base64-encodes the Personal Access Token (PAT) appropriately
-                $base64AuthInfo = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(("{0}:{1}" -f "","$(PAT)")))
-                $url = "$(System.TeamFoundationCollectionUri)/$(System.TeamProject)/_apis/distributedtask/variablegroups/1?api-version=5.0-preview.1"
+                $base64AuthInfo = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(("{0}:{1}" -f "","$($env:PAT)")))
+                $url = "$($env:System.TeamFoundationCollectionUri)$($env:System.TeamProject)/_apis/distributedtask/variablegroups/1?api-version=5.0-preview.1"
                 
                 $json = '{"id":1,"type":"Vsts","name":"DEV Configuration","variables":{'
                 $data.GetEnumerator() | foreach {
@@ -196,8 +196,8 @@ stages:
                 $data = $JS.DeserializeObject("$($env:armoutput)")
                 
                 # Base64-encodes the Personal Access Token (PAT) appropriately
-                $base64AuthInfo = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(("{0}:{1}" -f "","$(PAT)")))
-                $url = "https://dev.azure.com/phimorisseau0895/$(System.TeamProject)/_apis/distributedtask/variablegroups/1?api-version=5.0-preview.1"
+                $base64AuthInfo = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(("{0}:{1}" -f "","$($env:PAT)")))
+                $url = "$($env:System.TeamFoundationCollectionUri)$($env:System.TeamProject)/_apis/distributedtask/variablegroups/1?api-version=5.0-preview.1"
                 
                 $json = '{"id":1,"type":"Vsts","name":"UAT Configuration","variables":{'
                 $data.GetEnumerator() | foreach {
