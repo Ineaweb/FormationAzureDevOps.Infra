@@ -12,7 +12,7 @@
 		"storage_name": { "type": "string" }		
     },
     "variables": {
-        "storageAccounts_name": "[concat(parameters('project_name') , parameters('storage_name') , parameters('env_code') , parameters('region_code') ,'store001')]",
+        "storageAccounts_name": "[concat(parameters('project_name') , parameters('env_code') , parameters('region_code') ,'1')]",
 		"location_toLower": "[toLower(replace(parameters('location'),' ',''))]",
 		"resourceId": "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccounts_name'))]",
 		"apiVersion": "[providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]]"

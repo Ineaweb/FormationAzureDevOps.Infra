@@ -26,6 +26,7 @@ stages:
         location: 'West Europe'
         csmFile: template.master.json
         csmParametersFile: parameters/parameters.dev.json
+        overrideParameters: '-project_name $(System.TeamProject)'
         deploymentMode: Validation
     - task: ArchiveFiles@2
       displayName: 'Archive template'
