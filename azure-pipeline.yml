@@ -101,7 +101,7 @@ stages:
                 # Base64-encodes the Personal Access Token (PAT) appropriately
                 $base64AuthInfo = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(("{0}:{1}" -f "","$($env:PAT)")))
 
-                $requestUrl = "$($env:System.TeamFoundationCollectionUri)$($env:System.TeamProject)/_apis/distributedtask/variablegroups?groupName=DEV%20Configuration"
+                $requestUrl = "$(System.TeamFoundationCollectionUri)$(System.TeamProject)/_apis/distributedtask/variablegroups?groupName=DEV%20Configuration"
                 Write-Host "Request $requestUrl."
                 $result = Invoke-RestMethod -Uri $requestUrl -Method Get -ContentType "application/json" -Headers @{Authorization=("Basic {0}" -f $base64AuthInfo)}
                 $groupId = result.value[0].id;
@@ -120,7 +120,7 @@ stages:
                 
                 $json = $json.Substring(0,$json.Length-1) + '}}' 
                 
-                $url = "$($env:System.TeamFoundationCollectionUri)$($env:System.TeamProject)/_apis/distributedtask/variablegroups/$groupId?api-version=5.0-preview.1"
+                $url = "$(System.TeamFoundationCollectionUri)$(System.TeamProject)/_apis/distributedtask/variablegroups/$groupId?api-version=5.0-preview.1"
                 Write-Host "Send to $url."
                 $pipeline = Invoke-RestMethod -Uri $url -Method Put -Body $json -ContentType "application/json" -Headers @{Authorization=("Basic {0}" -f $base64AuthInfo)}
           - task: AzureCLI@2
@@ -203,7 +203,7 @@ stages:
                 
                 # Base64-encodes the Personal Access Token (PAT) appropriately
                 $base64AuthInfo = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(("{0}:{1}" -f "","$($env:PAT)")))
-                $requestUrl = "$($env:System.TeamFoundationCollectionUri)$($env:System.TeamProject)/_apis/distributedtask/variablegroups?groupName=UAT%20Configuration"
+                $requestUrl = "$(System.TeamFoundationCollectionUri)$(System.TeamProject)/_apis/distributedtask/variablegroups?groupName=UAT%20Configuration"
                 Write-Host "Request $requestUrl."
                 $result = Invoke-RestMethod -Uri $requestUrl -Method Get -ContentType "application/json" -Headers @{Authorization=("Basic {0}" -f $base64AuthInfo)}
                 $groupId = result.value[0].id;
@@ -220,5 +220,5 @@ stages:
                 
                 $json = $json.Substring(0,$json.Length-1) + '}}' 
                 
-                $url = "$($env:System.TeamFoundationCollectionUri)$($env:System.TeamProject)/_apis/distributedtask/variablegroups/$groupId?api-version=5.0-preview.1"
+                $url = "$(System.TeamFoundationCollectionUri)$(System.TeamProject)/_apis/distributedtask/variablegroups/$groupId?api-version=5.0-preview.1"
                 $pipeline = Invoke-RestMethod -Uri $url -Method Put -Body $json -ContentType "application/json" -Headers @{Authorization=("Basic {0}" -f $base64AuthInfo)} 
