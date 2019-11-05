@@ -1,0 +1,26 @@
+pool:
+  name: Hosted VS2017
+steps:
+- task: gittools.gitversion.gitversion-task.GitVersion@4
+  displayName: GitVersion
+  inputs:
+    preferBundledVersion: false
+
+- task: AzureResourceGroupDeployment@2
+  displayName: 'Azure Deployment:Create Or Update Resource Group action on op01-dev-we'
+  inputs:
+    azureSubscription: PMOAzure
+    resourceGroupName: 'op01-dev-we'
+    location: 'West Europe'
+    csmFile: template.master.json
+    csmParametersFile: parameters/parameters.dev.json
+    deploymentMode: Validation
+
+- task: ArchiveFiles@2
+  displayName: 'Archive template'
+  inputs:
+    rootFolderOrFile: '$(Build.SourcesDirectory)'
+    archiveFile: '$(Build.ArtifactStagingDirectory)/$(Build.DefinitionName)_$(Build.BuildNumber).zip'
+
+- task: PublishBuildArtifacts@1
+  displayName: 'Publish Artifact: drop'

@@ -1,0 +1,48 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {	
+        "project_name": { "type": "string" },
+        "env_code": { "type": "string" },
+        "region_code": { "type": "string" }
+    },
+    "variables": {
+        "appinsight_name": "[concat(parameters('project_name') , '-monitor-' , parameters('env_code') , '-', parameters('region_code') ,'-ai')]",
+		"resourceId": "[resourceId('Microsoft.Insights/components', variables('appinsight_name'))]",
+		"apiVersion": "[providers('Microsoft.Insights', 'components').apiVersions[0]]"
+    },
+    "resources": [
+        {
+            "comments": "Création ou mise à jour de la télémétrie Application Insight.",
+            "type": "microsoft.insights/components",
+            "kind": "other",
+            "name": "[variables('appinsight_name')]",
+            "apiVersion": "[variables('apiVersion')]",
+            "location": "westeurope",
+            "tags": {                
+                "Environment": "[parameters('env_code')]",
+                "Solution": "appFormation",
+                "Region": "[parameters('region_code')]"
+            },
+            "scale": null,
+            "properties": {
+                "Application_Type": "other",
+                "Flow_Type": "Redfield",
+                "Request_Source": "IbizaAIExtension",
+                "HockeyAppId": null,
+                "SamplingPercentage": null
+            },
+            "dependsOn": []
+        }	
+    ],
+  "outputs": {
+    "applicationId": {
+      "type": "string",
+      "value": "[reference(variables('resourceId'), variables('apiVersion')).applicationId]"
+    },
+    "instrumentationKey": {
+      "type": "string",
+      "value": "[reference(variables('resourceId'), variables('apiVersion')).instrumentationKey]"
+    }
+  }
+}

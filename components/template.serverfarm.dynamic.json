@@ -1,0 +1,59 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {	
+        "project_name": { "type": "string" },
+        "env_code": { "type": "string" },
+        "region_code": { "type": "string" },
+        "location": { 
+            "defaultValue": "West Europe",
+            "type": "string" 
+        },
+		"farm_name": { "type": "string" }	
+    },
+    "variables": {
+        "serverfarm_name": "[concat(parameters('project_name') , '-', parameters('farm_name') ,'-' , parameters('env_code') , '-', parameters('region_code') ,'-asp')]",
+		"resourceId": "[resourceId('Microsoft.Web/serverfarms', variables('serverfarm_name'))]",
+		"apiVersion": "[providers('Microsoft.Web', 'serverfarms').apiVersions[0]]"
+    },
+    "resources": [
+        {
+            "comments": "Création ou mise à jour du service plan.",
+            "type": "Microsoft.Web/serverfarms",
+            "sku": {
+				"name": "Y1",
+                "tier": "Dynamic",
+                "size": "Y1",
+                "family": "Y",
+                "capacity": 0
+            },
+            "kind": "app",
+            "name": "[variables('serverfarm_name')]",
+            "apiVersion": "[variables('apiVersion')]",
+            "location": "[parameters('location')]",
+            "tags": {                
+                "Environment": "[parameters('env_code')]",
+                "Solution": "appFormation",
+                "Region": "[parameters('region_code')]"
+            },
+            "scale": null,
+            "properties": {
+                "name": "[variables('serverfarm_name')]",
+                "workerTierName": null,
+                "adminSiteName": null,
+                "hostingEnvironmentProfile": null,
+                "perSiteScaling": false,
+                "reserved": false,
+                "targetWorkerCount": 0,
+                "targetWorkerSizeId": 0
+            },
+            "dependsOn": []
+        }	
+    ],
+	"outputs": {
+		"resourceId": {
+		  "type": "string",
+		  "value": "[resourceId('Microsoft.Web/serverfarms', variables('serverfarm_name'))]"
+		}		
+	}
+}

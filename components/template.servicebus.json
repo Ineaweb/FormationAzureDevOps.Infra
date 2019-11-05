@@ -1,0 +1,116 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "project_name": {
+      "type": "string"
+    },
+    "env_code": {
+      "type": "string"
+    },
+    "region_code": {
+      "type": "string"
+    },
+    "location": {
+      "defaultValue": "West Europe",
+      "type": "string"
+    }
+  },
+  "variables": {
+    "servicebus_name": "[concat(parameters('project_name') , '-bus-' , parameters('env_code') , '-' , parameters('region_code') ,'-sbn')]",
+    "servicebus_function01_autorization_name": "[concat(parameters('project_name') , '-bus-' , parameters('env_code') , '-' , parameters('region_code') ,'-func01-name')]",
+    "servicebus_function02_autorization_name": "[concat(parameters('project_name') , '-bus-' , parameters('env_code') , '-' , parameters('region_code') ,'-func02-name')]",
+    "location_toLower": "[toLower(replace(parameters('location'),' ',''))]",
+    "resourceId": "[resourceId('Microsoft.ServiceBus/namespaces', variables('servicebus_name'))]",
+    "servicebus_function01_autorization_resourceId": "[resourceId('Microsoft.ServiceBus/namespaces/authorizationRules', variables('servicebus_name'), variables('servicebus_function01_autorization_name'))]",
+    "servicebus_function02_autorization_resourceId": "[resourceId('Microsoft.ServiceBus/namespaces/authorizationRules', variables('servicebus_name'), variables('servicebus_function02_autorization_name'))]",
+    "apiVersion": "2017-04-01"
+  },
+  "resources": [
+    {
+      "comments": "Création ou mise à jour du bus ServiceBus.",
+      "apiVersion": "2017-04-01",
+      "name": "[variables('servicebus_name')]",
+      "type": "Microsoft.ServiceBus/namespaces",
+      "location": "[resourceGroup().location]",
+      "sku": {
+        "name": "Standard"
+      },
+      "tags": {
+        "Environment": "[parameters('env_code')]",
+        "Solution": "appFormation",
+        "Region": "[parameters('region_code')]"
+      },
+      "resources": [
+        {
+          "comments": "Création ou mise à jour de la queue 'Queue01' de Service bus.",
+          "type": "Queues",
+          "name": "Queue01",
+          "apiVersion": "[variables('apiVersion')]",
+          "location": "[parameters('location')]",
+          "scale": null,
+          "properties": {
+            "path": "Queue01",
+            "lockDuration": "PT30S",
+            "maxSizeInMegabytes": 2048,
+            "requiresDuplicateDetection": false,
+            "requiresSession": false,
+            "defaultMessageTimeToLive": "P14D",
+            "deadLetteringOnMessageExpiration": false,
+            "enableBatchedOperations": false,
+            "duplicateDetectionHistoryTimeWindow": "PT10M",
+            "maxDeliveryCount": 10,
+            "autoDeleteOnIdle": "P10675199DT2H48M5.4775807S",
+            "enablePartitioning": true,
+            "enableExpress": true
+          },
+          "dependsOn": [
+            "[variables('resourceId')]"
+          ]
+        },
+        {
+          "comments": "Creation ou mise à jour des autorisations d'accès à la queue pour la Function01.",
+          "type": "Microsoft.ServiceBus/namespaces/AuthorizationRules",
+          "name": "[concat(variables('servicebus_name'), '/', variables('servicebus_function01_autorization_name'))]",
+          "apiVersion": "[variables('apiVersion')]",
+          "location": "[parameters('location')]",
+          "scale": null,
+          "properties": {
+            "rights": [
+              "Send"
+            ]
+          },
+          "dependsOn": [
+            "[variables('resourceId')]"
+          ]
+        },
+        {
+          "comments": "Creation ou mise à jour des autorisations d'accès à la queue pour la Function01.",
+          "type": "Microsoft.ServiceBus/namespaces/AuthorizationRules",
+          "name": "[concat(variables('servicebus_name'), '/', variables('servicebus_function02_autorization_name'))]",
+          "apiVersion": "[variables('apiVersion')]",
+          "location": "[parameters('location')]",
+          "scale": null,
+          "properties": {
+            "rights": [
+              "Listen"
+            ]
+          },
+          "dependsOn": [
+            "[variables('resourceId')]"
+          ]
+        }
+      ]
+    }
+  ],
+  "outputs": {
+    "func01AutorizationConnectionString": {
+      "type": "string",
+      "value": "[listKeys(variables('servicebus_function01_autorization_resourceId'), variables('apiVersion')).primaryConnectionString]"
+    },
+    "func02AutorizationConnectionString": {
+      "type": "string",
+      "value": "[listKeys(variables('servicebus_function02_autorization_resourceId'), variables('apiVersion')).primaryConnectionString]"
+    }
+  }
+}

@@ -1,0 +1,211 @@
+# Only run against master
+trigger:
+- master
+- release/*
+
+stages:
+- stage: validate_Infra
+  displayName: validate Infra
+  jobs:
+  - job : Validate_ARM_template
+    displayName: Validate ARM templates
+    pool:
+      vmImage: ubuntu-latest
+    steps:
+    - task: gittools.gitversion.gitversion-task.GitVersion@5
+      displayName: GitVersion
+      inputs:
+        preferBundledVersion: false
+        configFilePath: GitVersion.yml
+        updateAssemblyInfo: true
+    - task: AzureResourceGroupDeployment@2
+      displayName: 'Azure Deployment:Create Or Update Resource Group action on op01-dev-we'
+      inputs:
+        azureSubscription: PMOAzure
+        resourceGroupName: 'op01-dev-we'
+        location: 'West Europe'
+        csmFile: template.master.json
+        csmParametersFile: parameters/parameters.dev.json
+        deploymentMode: Validation
+    - task: ArchiveFiles@2
+      displayName: 'Archive template'
+      inputs:
+        rootFolderOrFile: '$(Build.SourcesDirectory)'
+        archiveFile: '$(Build.ArtifactStagingDirectory)/$(Build.DefinitionName)_$(Build.BuildNumber).zip'        
+    - publish: $(build.artifactstagingdirectory)
+      artifact: Infra
+- stage: deploy_DEV
+  displayName: deploy to DEV
+  variables:
+  - group: DEV Configuration  
+  dependsOn: validate_Infra
+  jobs:
+  - deployment: Deploy_infra
+    displayName: deploy and configure azure infra
+    pool:
+      vmImage: windows-latest
+    environment: DEV
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - task: DownloadPipelineArtifact@2
+            inputs:
+              artifactName: Infra
+              targetPath: '$(Build.SourcesDirectory)'
+          - task: ExtractFiles@1
+            displayName: 'Extract files '
+            inputs:
+              destinationFolder: '$(Build.SourcesDirectory)\ARM'
+          - task: AzureFileCopy@2
+            displayName: 'AzureBlob File Copy'
+            inputs:
+              SourcePath: '$(Build.SourcesDirectory)\ARM\s'
+              azureSubscription: PMOAzure
+              Destination: AzureBlob
+              storage: shareddeploymentstore001
+              ContainerName: 'op01-armtemplates'
+              outputStorageUri: storageUri
+              outputStorageContainerSasToken: storageKey          
+          - task: AzurePowerShell@3
+            displayName: 'Azure PowerShell script: InlineScript'
+            inputs:
+              azureSubscription: PMOAzure
+              ScriptType: InlineScript
+              Inline: |
+                $result = Get-AzureRmResource -Name "op01-app-dev-we-func"
+                $is_exist = $result.Count -gt 0
+                Write-Host "##vso[task.setvariable variable=function_app_exist;]$is_exist"
+              azurePowerShellVersion: LatestVersion
+          - task: AzureResourceGroupDeployment@2
+            displayName: 'Azure Deployment:Create Or Update Resource Group action on op01-dev-we'
+            inputs:
+              azureSubscription: PMOAzure
+              resourceGroupName: 'op01-dev-we'
+              location: 'West Europe'
+              csmFile: '$(Build.SourcesDirectory)\ARM\s\template.master.json'
+              csmParametersFile: '$(Build.SourcesDirectory)\ARM\s\parameters\parameters.dev.json'
+              overrideParameters: '-storageUri $(storageUri) -storageKey $(storageKey) -function_app_exist $(function_app_exist)'
+              deploymentOutputs: armoutput
+          - task: PowerShell@2
+            displayName: 'Save output params'
+            inputs:
+              targetType: 'inline'
+              script: |
+                Add-Type -AssemblyName System.Web.Extensions
+                $JS = New-Object System.Web.Script.Serialization.JavaScriptSerializer
+                $data = $JS.DeserializeObject("$($env:armoutput)")
+                
+                # Base64-encodes the Personal Access Token (PAT) appropriately
+                $base64AuthInfo = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(("{0}:{1}" -f "","asr25moaue5wvpylvletvwjoyx7xnguk4gjzcibpfhfztpy32h6q")))
+                $url = "https://dev.azure.com/phimorisseau0895/ProjetPMO/_apis/distributedtask/variablegroups/1?api-version=5.0-preview.1"
+                
+                $json = '{"id":1,"type":"Vsts","name":"DEV Configuration","variables":{'
+                $data.GetEnumerator() | foreach {
+                  $varName = $_.Key
+                  $varValue = $_.Value.GetEnumerator() | foreach { if($_.Key -eq "value") { $_.Value } }
+                
+                  Write-Host "Updating secret '$varName'..."
+                        $json = $json + '"' + $varName + '":{"isSecret":true,"value":"' + $varValue + '"},'      
+                  Write-Host "Secret '$varName' updated."
+
+                  Write-Host "##vso[task.setvariable variable=$varName;]$varValue"
+                }
+                
+                $json = $json.Substring(0,$json.Length-1) + '}}' 
+                
+                $pipeline = Invoke-RestMethod -Uri $url -Method Put -Body $json -ContentType "application/json" -Headers @{Authorization=("Basic {0}" -f $base64AuthInfo)}
+          - task: AzureCLI@2
+            displayName: Upsert table 'Table01' in storage account
+            inputs:
+              azureSubscription: PMOAzure
+              scriptType: ps
+              scriptLocation: inlineScript
+              inlineScript: |
+                  $result = az storage table exists --name 'Table01' --connection-string '$(storageaccountAppConnectionstring)'
+                  Write-Host $result
+                  if(!$result.exists)
+                  {
+                    Write-Host "Creating table Table01"
+                    az storage table create --name 'Table01' --connection-string '$(storageaccountAppConnectionstring)'
+                  }
+- stage: deploy_UAT
+  displayName: deploy to UAT
+  variables:
+  - group: UAT Configuration  
+  dependsOn: deploy_DEV
+  condition: eq(variables['Build.SourceBranch'], 'refs/heads/release')
+  jobs:
+  - deployment: Deploy_infra
+    displayName: deploy and configure azure infra
+    pool:
+      vmImage: windows-latest
+    environment: DEV
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - task: DownloadPipelineArtifact@2
+            inputs:
+              artifactName: Infra
+              targetPath: '$(Build.SourcesDirectory)'
+          - task: ExtractFiles@1
+            displayName: 'Extract files '
+            inputs:
+              destinationFolder: '$(Build.SourcesDirectory)\ARM'
+          - task: AzureFileCopy@2
+            displayName: 'AzureBlob File Copy'
+            inputs:
+              SourcePath: '$(Build.SourcesDirectory)\ARM\s'
+              azureSubscription: PMOAzure
+              Destination: AzureBlob
+              storage: shareddeploymentstore001
+              ContainerName: 'op01-armtemplates'
+              outputStorageUri: storageUri
+              outputStorageContainerSasToken: storageKey          
+          - task: AzurePowerShell@3
+            displayName: 'Azure PowerShell script: InlineScript'
+            inputs:
+              azureSubscription: PMOAzure
+              ScriptType: InlineScript
+              Inline: |
+                $result = Get-AzureRmResource -Name "op01-app-uat-we-func"
+                $is_exist = $result.Count -gt 0
+                Write-Host "##vso[task.setvariable variable=function_app_exist;]$is_exist"
+              azurePowerShellVersion: LatestVersion
+          - task: AzureResourceGroupDeployment@2
+            displayName: 'Azure Deployment:Create Or Update Resource Group action on op01-uat-we'
+            inputs:
+              azureSubscription: PMOAzure
+              resourceGroupName: 'op01-uat-we'
+              location: 'West Europe'
+              csmFile: '$(Build.SourcesDirectory)\ARM\s\template.master.json'
+              csmParametersFile: '$(Build.SourcesDirectory)\ARM\s\parameters\parameters.uat.json'
+              overrideParameters: '-storageUri $(storageUri) -storageKey $(storageKey) -function_app_exist $(function_app_exist)'
+              deploymentOutputs: armoutput
+          - task: PowerShell@2
+            displayName: 'Save output params'
+            inputs:
+              targetType: 'inline'
+              script: |
+                Add-Type -AssemblyName System.Web.Extensions
+                $JS = New-Object System.Web.Script.Serialization.JavaScriptSerializer
+                $data = $JS.DeserializeObject("$($env:armoutput)")
+                
+                # Base64-encodes the Personal Access Token (PAT) appropriately
+                $base64AuthInfo = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(("{0}:{1}" -f "","asr25moaue5wvpylvletvwjoyx7xnguk4gjzcibpfhfztpy32h6q")))
+                $url = "https://dev.azure.com/phimorisseau0895/ProjetPMO/_apis/distributedtask/variablegroups/1?api-version=5.0-preview.1"
+                
+                $json = '{"id":1,"type":"Vsts","name":"UAT Configuration","variables":{'
+                $data.GetEnumerator() | foreach {
+                  $varName = $_.Key
+                  $varValue = $_.Value.GetEnumerator() | foreach { if($_.Key -eq "value") { $_.Value } }
+                
+                  Write-Host "Updating secret '$varName'..."
+                        $json = $json + '"' + $varName + '":{"isSecret":true,"value":"' + $varValue + '"},'      
+                  Write-Host "Secret '$varName' updated."
+                }
+                
+                $json = $json.Substring(0,$json.Length-1) + '}}' 
+                
+                $pipeline = Invoke-RestMethod -Uri $url -Method Put -Body $json -ContentType "application/json" -Headers @{Authorization=("Basic {0}" -f $base64AuthInfo)} 

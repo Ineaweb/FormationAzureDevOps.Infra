@@ -1,0 +1,269 @@
+{
+  "$schema":"https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion":"1.0.0.0",
+  "parameters":{
+    "project_name":{
+      "type":"string"
+    },
+    "env_code":{
+      "type":"string"
+    },
+    "region_code":{
+      "type":"string"
+    },
+    "location":{
+      "defaultValue":"West Europe",
+      "type":"string"
+    },
+    "function_name":{
+      "type":"string"
+    },
+    "farm_name":{
+      "type":"string"
+    },
+    "storageAccount_connectionString":{
+      "type":"string"
+    },
+    "function_publishingUsername":{
+      "type":"string"
+    },
+    "function_publishingPassword":{
+      "type":"string"
+    }
+  },
+  "variables":{
+    "function_api_name":"[concat(parameters('project_name') , '-', parameters('function_name') ,'-' , parameters('env_code') , '-', parameters('region_code') ,'-func')]",
+    "hostNameBindings":"[concat(variables('function_api_name') ,'.azurewebsites.net')]",
+    "serverfarm_name":"[concat(parameters('project_name') , '-', parameters('farm_name') ,'-' , parameters('env_code') , '-', parameters('region_code') ,'-asp')]",
+    "location_toLower":"[toLower(replace(parameters('location'),' ',''))]",
+    "resourceId":"[resourceId('Microsoft.Web/sites', variables('function_api_name'))]",
+    "serverfarm_resourceId":"[concat(subscription().Id, '/resourceGroups/', resourcegroup().name, '/providers/Microsoft.Web/serverfarms/', variables('serverfarm_name'))]",
+    "apiVersion":"[providers('Microsoft.Web', 'sites').apiVersions[0]]"
+  },
+  "resources":[
+    {
+      "comments":"Création ou mise à jour de l'azure Functions.",
+      "type":"Microsoft.Web/sites",
+      "kind":"functionapp",
+      "name":"[variables('function_api_name')]",
+      "apiVersion":"[variables('apiVersion')]",
+      "location":"[parameters('location')]",
+      "tags":{
+        "Environment":"[parameters('env_code')]",
+        "Solution":"appFormation",
+        "Region":"[parameters('region_code')]"
+      },
+      "scale":null,
+      "properties":{
+        "enabled":true,
+        "hostNameSslStates":[
+          {
+            "name":"[concat(variables('function_api_name'),'.azurewebsites.net')]",
+            "sslState":"Disabled",
+            "virtualIP":null,
+            "thumbprint":null,
+            "toUpdate":null,
+            "hostType":"Standard"
+          },
+          {
+            "name":"[concat(variables('function_api_name'),'.scm.azurewebsites.net')]",
+            "sslState":"Disabled",
+            "virtualIP":null,
+            "thumbprint":null,
+            "toUpdate":null,
+            "hostType":"Repository"
+          }
+        ],
+        "serverFarmId":"[variables('serverfarm_resourceId')]",
+        "reserved": false,
+        "siteConfig":{
+          "appSettings": [
+            {
+                "name": "AzureWebJobsDashboard",
+                "value": "[parameters('storageAccount_connectionString')]"
+            },
+            {
+                "name": "AzureWebJobsStorage",
+                "value": "[parameters('storageAccount_connectionString')]"
+            },
+            {
+                "name": "FUNCTIONS_EXTENSION_VERSION",
+                "value": "~2"
+            },
+            {
+                "name": "WEBSITE_CONTENTAZUREFILECONNECTIONSTRING",
+                "value": "[parameters('storageAccount_connectionString')]"
+            },
+            {
+                "name": "WEBSITE_CONTENTSHARE",
+                "value": "appformation"
+            },
+            {
+                "name": "WEBSITE_NODE_DEFAULT_VERSION",
+                "value": "6.5.0"
+            }
+          ]
+        },
+        "scmSiteAlsoStopped":false,
+        "hostingEnvironmentProfile":null,
+        "clientAffinityEnabled":false,
+        "clientCertEnabled":false,
+        "hostNamesDisabled":false,
+        "containerSize":1536,
+        "dailyMemoryTimeQuota":0,
+        "cloningInfo":null
+      }
+    },
+    {
+      "comments":"Création ou mise à jour de la configuration de l'azure function API Fournisseur.",
+      "type":"Microsoft.Web/sites/config",
+      "name":"[concat(variables('function_api_name'), '/web')]",
+      "apiVersion":"[variables('apiVersion')]",
+      "location":"[parameters('location')]",
+      "tags":{
+        "Environment":"[parameters('env_code')]",
+        "Solution":"appFormation",
+        "Region":"[parameters('region_code')]"
+      },
+      "scale":null,
+      "properties":{
+        "numberOfWorkers":1,
+        "defaultDocuments":[
+          "Default.htm",
+          "Default.html",
+          "Default.asp",
+          "index.htm",
+          "index.html",
+          "iisstart.htm",
+          "default.aspx",
+          "index.php"
+        ],
+        "netFrameworkVersion":"v4.0",
+        "phpVersion":"5.6",
+        "pythonVersion":"",
+        "nodeVersion":"",
+        "linuxFxVersion":"",
+        "windowsFxVersion":null,
+        "requestTracingEnabled":false,
+        "remoteDebuggingEnabled":false,
+        "remoteDebuggingVersion":null,
+        "httpLoggingEnabled":false,
+        "logsDirectorySizeLimit":35,
+        "detailedErrorLoggingEnabled":false,
+        "publishingUsername":"[parameters('function_publishingUsername')]",
+        "publishingPassword":"[parameters('function_publishingPassword')]",
+        "metadata":null,
+        "connectionStrings":null,
+        "machineKey":null,
+        "handlerMappings":null,
+        "documentRoot":null,
+        "scmType":"None",
+        "use32BitWorkerProcess":false,
+        "webSocketsEnabled":false,
+        "alwaysOn":false,
+        "javaVersion":null,
+        "javaContainer":null,
+        "javaContainerVersion":null,
+        "appCommandLine":"",
+        "managedPipelineMode":"Integrated",
+        "virtualApplications":[
+          {
+            "virtualPath":"/",
+            "physicalPath":"site\\wwwroot",
+            "preloadEnabled":true,
+            "virtualDirectories":null
+          }
+        ],
+        "winAuthAdminState":0,
+        "winAuthTenantState":0,
+        "customAppPoolIdentityAdminState":false,
+        "customAppPoolIdentityTenantState":false,
+        "runtimeADUser":null,
+        "runtimeADUserPassword":null,
+        "loadBalancing":"LeastRequests",
+        "routingRules":[
+
+        ],
+        "experiments":{
+          "rampUpRules":[
+
+          ]
+        },
+        "limits":null,
+        "autoHealEnabled":false,
+        "autoHealRules":null,
+        "tracingOptions":null,
+        "vnetName":"",
+        "siteAuthEnabled":false,
+        "siteAuthSettings":{
+          "enabled":null,
+          "unauthenticatedClientAction":null,
+          "tokenStoreEnabled":null,
+          "allowedExternalRedirectUrls":null,
+          "defaultProvider":null,
+          "clientId":null,
+          "clientSecret":null,
+          "issuer":null,
+          "allowedAudiences":null,
+          "additionalLoginParams":null,
+          "isAadAutoProvisioned":false,
+          "googleClientId":null,
+          "googleClientSecret":null,
+          "googleOAuthScopes":null,
+          "facebookAppId":null,
+          "facebookAppSecret":null,
+          "facebookOAuthScopes":null,
+          "twitterConsumerKey":null,
+          "twitterConsumerSecret":null,
+          "microsoftAccountClientId":null,
+          "microsoftAccountClientSecret":null,
+          "microsoftAccountOAuthScopes":null
+        },
+        "cors":{
+          "allowedOrigins":[
+            "https://functions.azure.com",
+            "https://functions-staging.azure.com",
+            "https://functions-next.azure.com"
+          ]
+        },
+        "push":null,
+        "apiDefinition":null,
+        "autoSwapSlotName":null,
+        "localMySqlEnabled":false,
+        "managedServiceIdentityId":null,
+        "xManagedServiceIdentityId":null,
+        "ipSecurityRestrictions":[],
+        "http20Enabled":false,
+        "minTlsVersion":"1.0",
+        "ftpsState":"AllAllowed"
+      },
+      "dependsOn":[
+        "[resourceId('Microsoft.Web/sites', variables('function_api_name'))]"
+      ]
+    },
+    {
+      "comments":"Création ou mise à jour du binding de l'azure function.",
+      "type":"Microsoft.Web/sites/hostNameBindings",
+      "name":"[concat(variables('function_api_name'), '/', variables('hostNameBindings'))]",
+      "apiVersion":"[variables('apiVersion')]",
+      "location":"[parameters('location')]",
+      "scale":null,
+      "tags":{
+        "Environment":"[parameters('env_code')]",
+        "Solution":"appFormation",
+        "Region":"[parameters('region_code')]"
+      },
+      "properties":{
+        "siteName":"[variables('function_api_name')]",
+        "domainId":null,
+        "hostNameType":"Verified"
+      },
+      "dependsOn":[
+        "[resourceId('Microsoft.Web/sites', variables('function_api_name'))]"
+      ]
+    }
+  ],
+  "outputs":{
+
+  }
+}

@@ -1,0 +1,79 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {	
+        "project_name": { "type": "string" },
+        "env_code": { "type": "string" },
+        "region_code": { "type": "string" },
+        "location": { 
+            "defaultValue": "West Europe",
+            "type": "string" 
+        },
+		"storage_name": { "type": "string" }		
+    },
+    "variables": {
+        "storageAccounts_name": "[concat(parameters('project_name') , parameters('storage_name') , parameters('env_code') , parameters('region_code') ,'store001')]",
+		"location_toLower": "[toLower(replace(parameters('location'),' ',''))]",
+		"resourceId": "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccounts_name'))]",
+		"apiVersion": "[providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]]"
+    },
+    "resources": [
+        {
+            "comments": "Création ou mise à jour de l'espace de stockage.",
+            "type": "Microsoft.Storage/storageAccounts",
+            "sku": {
+                "name": "Standard_LRS",
+                "tier": "Standard"
+            },
+            "kind": "Storage",
+            "name": "[variables('storageAccounts_name')]",
+            "apiVersion": "[variables('apiVersion')]",
+            "location": "[variables('location_toLower')]",
+            "tags": {                
+                "Environment": "[parameters('env_code')]",
+                "Solution": "appFormation",
+                "Region": "[parameters('region_code')]"
+            },
+            "scale": null,
+            "properties": {
+                "networkAcls": {
+                    "bypass": "AzureServices",
+                    "virtualNetworkRules": [],
+                    "ipRules": [],
+                    "defaultAction": "Allow"
+                },
+                "supportsHttpsTrafficOnly": false,
+                "encryption": {
+                    "services": {
+                        "file": {
+                            "enabled": true
+                        },
+                        "blob": {
+                            "enabled": true
+                        }
+                    },
+                    "keySource": "Microsoft.Storage"
+                }
+            },
+            "dependsOn": []
+        }	
+    ],
+	"outputs": {	
+		"connectionString": {
+		  "type": "string",
+		  "value": "[concat('DefaultEndpointsProtocol=https;AccountName=',variables('storageAccounts_name'),';AccountKey=',listKeys(variables('resourceId'), variables('apiVersion')).keys[0].value)]"
+		},
+		"key": {
+		  "type": "string",
+		  "value": "[listKeys(variables('resourceId'), variables('apiVersion')).keys[0].value]"
+		},
+    "name": {
+      "type": "string",
+      "value": "[variables('storageAccounts_name')]"
+    },
+    "objectId": {
+      "type": "string",
+      "value": "[variables('resourceId')]"
+    }
+	}
+}

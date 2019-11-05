@@ -1,0 +1,16 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "storageUri": { "value": "https://shareddeploymentstore001.blob.core.windows.net/app01-deploy/" },
+    "storageKey": { "value": "" },
+    "project_name": { "value": "op01" },
+    "env_code": { "value": "dev" },
+    "region_code": { "value": "we" },
+    "location": { "value": "West Europe" },
+    "app_publishingUsername": { "value": "$app_publishing_username" },
+    "app_publishingPassword": { "value": "" },
+    "config_web_name": { "value": "web" },
+    "function_app_exist": { "value": "False" }
+  }
+}
