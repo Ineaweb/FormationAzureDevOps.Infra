@@ -116,6 +116,8 @@ stages:
                 
                 $json = $json.Substring(0,$json.Length-1) + '}}' 
                 
+                Write-Host "Send to $url."
+
                 $pipeline = Invoke-RestMethod -Uri $url -Method Put -Body $json -ContentType "application/json" -Headers @{Authorization=("Basic {0}" -f $base64AuthInfo)}
           - task: AzureCLI@2
             displayName: Upsert table 'Table01' in storage account
