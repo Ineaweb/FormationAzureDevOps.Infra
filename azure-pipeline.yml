@@ -104,6 +104,8 @@ stages:
                 $requestUrl = "$(System.TeamFoundationCollectionUri)$(System.TeamProject)/_apis/distributedtask/variablegroups?groupName=DEV%20Configuration"
                 Write-Host "Request $requestUrl."
                 $result = Invoke-RestMethod -Uri $requestUrl -Method Get -ContentType "application/json" -Headers @{Authorization=("Basic {0}" -f $base64AuthInfo)}
+                $jstmp = ConvertTo-Json $result
+                Write-Host $jstmp;
                 $groupId = $result.value[0].id;
 
                 $json = '{"id":$groupId,"type":"Vsts","name":"DEV Configuration","variables":{'
@@ -221,4 +223,18 @@ stages:
                 $json = $json.Substring(0,$json.Length-1) + '}}' 
                 
                 $url = "$(System.TeamFoundationCollectionUri)$(System.TeamProject)/_apis/distributedtask/variablegroups/$groupId?api-version=5.0-preview.1"
-                $pipeline = Invoke-RestMethod -Uri $url -Method Put -Body $json -ContentType "application/json" -Headers @{Authorization=("Basic {0}" -f $base64AuthInfo)} 
+                $pipeline = Invoke-RestMethod -Uri $url -Method Put -Body $json -ContentType "application/json" -Headers @{Authorization=("Basic {0}" -f $base64AuthInfo)}
+          - task: AzureCLI@2
+            displayName: Upsert table 'Table01' in storage account
+            inputs:
+              azureSubscription: AzureServiceConnection
+              scriptType: ps
+              scriptLocation: inlineScript
+              inlineScript: |
+                  $result = az storage table exists --name 'Table01' --connection-string '$(storageaccountAppConnectionstring)'
+                  Write-Host $result
+                  if(!$result.exists)
+                  {
+                    Write-Host "Creating table Table01"
+                    az storage table create --name 'Table01' --connection-string '$(storageaccountAppConnectionstring)'
+                  }
