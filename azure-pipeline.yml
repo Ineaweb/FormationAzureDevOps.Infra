@@ -104,9 +104,9 @@ stages:
                 $requestUrl = "$(System.TeamFoundationCollectionUri)$(System.TeamProject)/_apis/distributedtask/variablegroups?groupName=DEV%20Configuration"
                 Write-Host "Request $requestUrl."
                 $result = Invoke-RestMethod -Uri $requestUrl -Method Get -ContentType "application/json" -Headers @{Authorization=("Basic {0}" -f $base64AuthInfo)}
-                $jstmp = ConvertTo-Json $result
-                Write-Host $jstmp;
-                $groupId = $result.value[0].id;
+                $jstmp = ConvertTo-Json $result | ConvertFrom-Json
+                Write-Host $jstmp.value;
+                $groupId = $jstmp.value[0].id;
 
                 $json = '{"id":$groupId,"type":"Vsts","name":"DEV Configuration","variables":{'
                 $data.GetEnumerator() | foreach {
