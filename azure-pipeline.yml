@@ -107,8 +107,9 @@ stages:
                 $jstmp = ConvertTo-Json $result | ConvertFrom-Json
                 Write-Host $jstmp.value;
                 $groupId = $jstmp.value[0].id;
+                Write-Host $groupId;
 
-                $json = '{"id":$groupId,"type":"Vsts","name":"DEV Configuration","variables":{'
+                $json = '{"id":"$groupId","type":"Vsts","name":"DEV Configuration","variables":{'
                 $data.GetEnumerator() | foreach {
                   $varName = $_.Key
                   $varValue = $_.Value.GetEnumerator() | foreach { if($_.Key -eq "value") { $_.Value } }
@@ -122,7 +123,7 @@ stages:
                 
                 $json = $json.Substring(0,$json.Length-1) + '}}' 
                 
-                $url = "$(System.TeamFoundationCollectionUri)$(System.TeamProject)/_apis/distributedtask/variablegroups/$groupId?api-version=5.0-preview.1"
+                $url = "$(System.TeamFoundationCollectionUri)$(System.TeamProject)/_apis/distributedtask/variablegroups/" + $groupId + "?api-version=5.0-preview.1"
                 Write-Host "Send to $url."
                 $pipeline = Invoke-RestMethod -Uri $url -Method Put -Body $json -ContentType "application/json" -Headers @{Authorization=("Basic {0}" -f $base64AuthInfo)}
           - task: AzureCLI@2
