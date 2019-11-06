@@ -104,7 +104,7 @@ stages:
                 $requestUrl = "$(System.TeamFoundationCollectionUri)$(System.TeamProject)/_apis/distributedtask/variablegroups?groupName=DEV%20Configuration"
                 Write-Host "Request $requestUrl."
                 $result = Invoke-RestMethod -Uri $requestUrl -Method Get -ContentType "application/json" -Headers @{Authorization=("Basic {0}" -f $base64AuthInfo)}
-                $groupId = result.value[0].id;
+                $groupId = $result.value[0].id;
 
                 $json = '{"id":$groupId,"type":"Vsts","name":"DEV Configuration","variables":{'
                 $data.GetEnumerator() | foreach {
@@ -206,7 +206,7 @@ stages:
                 $requestUrl = "$(System.TeamFoundationCollectionUri)$(System.TeamProject)/_apis/distributedtask/variablegroups?groupName=UAT%20Configuration"
                 Write-Host "Request $requestUrl."
                 $result = Invoke-RestMethod -Uri $requestUrl -Method Get -ContentType "application/json" -Headers @{Authorization=("Basic {0}" -f $base64AuthInfo)}
-                $groupId = result.value[0].id;
+                $groupId = $result.value[0].id;
 
                 $json = '{"id":$groupId,"type":"Vsts","name":"UAT Configuration","variables":{'
                 $data.GetEnumerator() | foreach {
